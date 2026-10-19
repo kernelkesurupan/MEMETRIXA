@@ -1,189 +1,169 @@
-MEMETRIXA — Solana Risk Scanner
+<div align="center">
 
-MEMETRIXA adalah proyek Python untuk mengambil data pasar token Solana dan melakukan penilaian risiko awal berdasarkan indikator seperti likuiditas, volume transaksi, umur trading pair, dan aktivitas jual-beli.
+# MEMETRIXA
 
-Versi: 0.1.0
-Bahasa: Python
-Sumber data pasar: DexScreener API
+**Solana Token Risk Scanner**
 
-Fitur
+Cek risiko token Solana sebelum kamu beli, langsung dari terminal.
 
-Mengambil data trading pair token Solana.
+![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)
+![Version](https://img.shields.io/badge/version-2.0-8A2BE2)
+![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+![Data](https://img.shields.io/badge/data-DexScreener-00C2FF)
+![Chain](https://img.shields.io/badge/chain-Solana-14F195?logoColor=black)
 
-Menampilkan nama dan simbol token.
+by **kernelkesurupan**
 
-Menampilkan likuiditas dan volume 24 jam.
+</div>
 
-Menghitung skor risiko awal dari 0–100.
+---
 
-Menampilkan kategori risiko dan indikator peringatan.
+## Apa ini?
 
-Persyaratan
+Memetrixa mengambil data pasar token Solana dari DexScreener, lalu mengecek beberapa hal di blockchain (mint authority, freeze authority, sebaran holder). Hasilnya dijadikan skor risiko 0–100 plus daftar peringatan, jadi kamu tahu apa saja yang perlu dicurigai.
 
-Python 3
+Ini alat bantu untuk riset awal, bukan penentu token itu scam atau bukan.
 
-Git (jika ingin mengunduh melalui GitHub)
+## Fitur
 
-Koneksi internet
+| | |
+|---|---|
+| 📊 **Data pasar** | Harga, likuiditas, volume 24 jam, FDV, umur pair, transaksi beli/jual |
+| 🔐 **Cek on-chain** | Mint authority, freeze authority, konsentrasi top holder |
+| 🎯 **Skor risiko** | 0–100 dengan 4 kategori: Rendah, Sedang, Tinggi, Sangat Tinggi |
+| ⚠️ **Peringatan** | Alasan skor dijelaskan satu per satu, bukan angka mentah |
+| 🖥️ **Tampilan rapi** | Kotak berwarna dan bar skor di terminal |
+| 💾 **Export JSON** | Simpan hasil scan untuk diolah lagi |
+| 🛡️ **Aman** | Menolak input private key / seed phrase, HTTPS only, tanpa dependensi |
 
-Instalasi
+## Contoh tampilan
 
-1. Unduh repository
+```
+╔══════════════════════════════════════════════════════════════╗
+║ TestCoin (TST)   pair 1/1                                    ║
+╠══════════════════════════════════════════════════════════════╣
+║ Mint        : So111111…11111112                              ║
+║ DEX         : raydium                                        ║
+║ Likuiditas  : $3,200.00                                      ║
+║ Volume 24h  : $90,000.00                                     ║
+║ Umur pair   : 30 menit                                       ║
+║ Mint auth   : AKTIF                                          ║
+╠══════════════════════════════════════════════════════════════╣
+║ SKOR RISIKO 100/100  SANGAT TINGGI                           ║
+║ ██████████████████████████████                               ║
+╠══════════════════════════════════════════════════════════════╣
+║ PERINGATAN                                                   ║
+║ ▲ Likuiditas rendah (<$5K)                                   ║
+║ ▲ Pair baru dibuat (<1 jam)                                  ║
+║ ▲ Mint authority AKTIF: dev bisa mencetak token tanpa batas  ║
+╚══════════════════════════════════════════════════════════════╝
+```
 
-Setelah repository tersedia di GitHub, jalankan:
+*(Data di atas hanya contoh. Di terminal aslinya berwarna.)*
 
+## Instalasi
+
+Kamu cuma butuh **Python 3.8+** dan koneksi internet. Tidak ada paket tambahan yang perlu diinstal.
+
+```bash
 git clone URL_REPOSITORY_KAMU
 cd MEMETRIXA
+python3 main.py
+```
 
-Ganti URL_REPOSITORY_KAMU dengan URL repository milikmu.
+Ganti `URL_REPOSITORY_KAMU` dengan URL repo milikmu.
 
-2. Buat virtual environment (disarankan)
+## Cara pakai
 
-python3 -m venv .venv
-source .venv/bin/activate
+**Mode interaktif**, tempel alamat mint token lalu Enter. Ketik `q` untuk keluar:
 
-Jika perintah python3 -m venv .venv gagal di Ubuntu/WSL, pasang paket python3-venv melalui pengelola paket sistem terlebih dahulu.
+```bash
+python3 main.py
+```
 
-3. Instal dependensi
+**Langsung scan satu token:**
 
-python -m pip install -r requirements.txt
+```bash
+python3 main.py So11111111111111111111111111111111111111112
+```
 
-4. Jalankan aplikasi
+Alamat di atas adalah Wrapped SOL, cocok buat coba-coba.
 
-python main.py
+### Opsi
 
-Masukkan alamat mint token Solana ketika diminta.
+| Opsi | Fungsi |
+|---|---|
+| `--top N` | Jumlah pair teratas yang dianalisis, 1–10 (default 3) |
+| `--json FILE` | Simpan hasil ke file JSON |
+| `--no-onchain` | Lewati pengecekan on-chain (lebih cepat) |
+| `--no-color` | Matikan warna |
 
-Untuk pengujian, gunakan alamat Wrapped SOL:
+Contoh:
 
-So11111111111111111111111111111111111111112
+```bash
+python3 main.py <MINT_ADDRESS> --top 5 --json hasil.json
+```
 
-Aplikasi akan menampilkan data pasar dan hasil penilaian risiko yang tersedia.
+### RPC sendiri (opsional)
 
-Cara Membaca Hasil
+RPC publik Solana gratis tapi sering kena rate limit. Kalau punya RPC sendiri (harus HTTPS):
 
-Likuiditas: perkiraan nilai likuiditas trading pair dalam USD.
+```bash
+export MEMETRIXA_RPC="https://rpc-kamu.example.com"
+```
 
-Volume 24h: volume perdagangan selama 24 jam.
+## Cara membaca hasil
 
-Skor Risiko: skor heuristik awal, bukan probabilitas scam.
+| Skor | Kategori | Artinya |
+|---|---|---|
+| 0–19 | 🟢 Rendah | Tidak ada tanda bahaya besar dari pengecekan dasar |
+| 20–39 | 🟡 Sedang | Ada beberapa hal yang perlu dicek |
+| 40–59 | 🔴 Tinggi | Banyak indikator berisiko |
+| 60–100 | 🔴 Sangat Tinggi | Hati-hati sekali |
 
-Kategori: klasifikasi berdasarkan aturan skor pada kode.
+Yang dinilai: likuiditas, umur pair, volume dan jumlah transaksi, pergerakan harga, rasio FDV terhadap likuiditas, kelengkapan website/sosmed, status authority token, dan konsentrasi holder.
 
-Peringatan: indikator yang memerlukan pemeriksaan lebih lanjut.
+**Skor makin tinggi = makin berisiko.** Ini skor heuristik dari aturan sederhana, bukan probabilitas scam.
 
-Memperbarui Kode
+## Struktur proyek
 
-Buka proyek di VS Code.
+```
+memetrixa/
+├── main.py                  # entry point + CLI
+└── app/
+    ├── ui.py                # tampilan terminal
+    └── scanner/
+        ├── market_data.py   # ambil data DexScreener
+        ├── onchain.py       # cek authority & holder via RPC
+        ├── risk_scanner.py  # hitung skor risiko
+        └── net.py           # HTTP client aman
+```
 
-Edit file yang ingin diperbarui.
+Mau ubah bobot skor? Buka `app/scanner/risk_scanner.py`, semua aturannya ada di fungsi `analyze_pair`.
 
-Simpan perubahan.
+## Keamanan
 
-Jalankan kembali python main.py.
+- Memetrixa **tidak pernah** meminta private key atau seed phrase. Kalau kamu tidak sengaja memasukkannya, input langsung ditolak dan tidak disimpan.
+- Hanya koneksi HTTPS, dengan timeout dan batas ukuran respons.
+- Nama token dari API dibersihkan dari karakter kontrol sebelum ditampilkan.
 
-Uji hasilnya sebelum membagikan versi baru.
+## Batasan
 
-Batasan
+- Belum bisa mendeteksi **honeypot** atau status **LP lock**.
+- Persentase holder bisa ikut menghitung akun pool likuiditas, jadi kadang terlihat lebih tinggi dari aslinya.
+- Data tergantung DexScreener dan RPC publik. Kalau salah satunya error, hasil bisa kurang lengkap.
+- Skor rendah **bukan** jaminan aman.
 
-MEMETRIXA saat ini menggunakan aturan penilaian risiko sederhana dan data pasar yang tersedia dari DexScreener. Versi ini belum dapat memastikan token merupakan scam, honeypot, atau rug pull. Skor rendah bukan jaminan keamanan.
+> ⚠️ **Disclaimer:** Ini bukan saran finansial. Selalu riset sendiri (DYOR) sebelum membeli token apa pun.
 
-Lakukan pemeriksaan tambahan sebelum mengambil keputusan investasi.
+## Lisensi
 
-Lisensi
+Belum ditentukan. Tambahkan file `LICENSE` kalau mau menetapkan aturan pakai dan distribusi.
 
-Belum ditentukan. Tambahkan file lisensi jika ingin menetapkan ketentuan penggunaan dan distribusi proyek.MEMETRIXA — Solana Risk Scanner
+---
 
-MEMETRIXA adalah proyek Python untuk mengambil data pasar token Solana dan melakukan penilaian risiko awal berdasarkan indikator seperti likuiditas, volume transaksi, umur trading pair, dan aktivitas jual-beli.
+<div align="center">
 
-Versi: 0.1.0
-Bahasa: Python
-Sumber data pasar: DexScreener API
+Dibuat oleh **kernelkesurupan**
 
-Fitur
-
-Mengambil data trading pair token Solana.
-
-Menampilkan nama dan simbol token.
-
-Menampilkan likuiditas dan volume 24 jam.
-
-Menghitung skor risiko awal dari 0–100.
-
-Menampilkan kategori risiko dan indikator peringatan.
-
-Persyaratan
-
-Python 3
-
-Git (jika ingin mengunduh melalui GitHub)
-
-Koneksi internet
-
-Instalasi
-
-1. Unduh repository
-
-Setelah repository tersedia di GitHub, jalankan:
-
-git clone URL_REPOSITORY_KAMU
-cd MEMETRIXA
-
-Ganti URL_REPOSITORY_KAMU dengan URL repository milikmu.
-
-2. Buat virtual environment (disarankan)
-
-python3 -m venv .venv
-source .venv/bin/activate
-
-Jika perintah python3 -m venv .venv gagal di Ubuntu/WSL, pasang paket python3-venv melalui pengelola paket sistem terlebih dahulu.
-
-3. Instal dependensi
-
-python -m pip install -r requirements.txt
-
-4. Jalankan aplikasi
-
-python main.py
-
-Masukkan alamat mint token Solana ketika diminta.
-
-Untuk pengujian, gunakan alamat Wrapped SOL:
-
-So11111111111111111111111111111111111111112
-
-Aplikasi akan menampilkan data pasar dan hasil penilaian risiko yang tersedia.
-
-Cara Membaca Hasil
-
-Likuiditas: perkiraan nilai likuiditas trading pair dalam USD.
-
-Volume 24h: volume perdagangan selama 24 jam.
-
-Skor Risiko: skor heuristik awal, bukan probabilitas scam.
-
-Kategori: klasifikasi berdasarkan aturan skor pada kode.
-
-Peringatan: indikator yang memerlukan pemeriksaan lebih lanjut.
-
-Memperbarui Kode
-
-Buka proyek di VS Code.
-
-Edit file yang ingin diperbarui.
-
-Simpan perubahan.
-
-Jalankan kembali python main.py.
-
-Uji hasilnya sebelum membagikan versi baru.
-
-Batasan
-
-MEMETRIXA saat ini menggunakan aturan penilaian risiko sederhana dan data pasar yang tersedia dari DexScreener. Versi ini belum dapat memastikan token merupakan scam, honeypot, atau rug pull. Skor rendah bukan jaminan keamanan.
-
-Lakukan pemeriksaan tambahan sebelum mengambil keputusan investasi.
-
-Lisensi
-
-Belum ditentukan. Tambahkan file lisensi jika ingin menetapkan ketentuan penggunaan dan distribusi proyek.
+</div>
